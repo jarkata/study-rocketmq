@@ -23,6 +23,7 @@ import ch.qos.logback.core.joran.spi.JoranException;
 import java.io.*;
 import java.util.Properties;
 import java.util.concurrent.Callable;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -46,6 +47,11 @@ public class NamesrvStartup {
     private static Properties properties = null;
     private static CommandLine commandLine = null;
 
+    /**
+     * NameSrv 命名服务
+     *
+     * @param args
+     */
     public static void main(String[] args) {
         main0(args);
     }
