@@ -191,7 +191,6 @@ public class EndTransactionProcessor implements NettyRequestProcessor {
     }
 
     private MessageExtBrokerInner endMessageTransaction(MessageExt msgExt) {
-        LOGGER.info("before commit message:{} ",msgExt);
         MessageExtBrokerInner msgInner = new MessageExtBrokerInner();
         msgInner.setTopic(msgExt.getUserProperty(MessageConst.PROPERTY_REAL_TOPIC));
         msgInner.setQueueId(Integer.parseInt(msgExt.getUserProperty(MessageConst.PROPERTY_REAL_QUEUE_ID)));
@@ -213,7 +212,6 @@ public class EndTransactionProcessor implements NettyRequestProcessor {
         msgInner.setPropertiesString(MessageDecoder.messageProperties2String(msgExt.getProperties()));
         MessageAccessor.clearProperty(msgInner, MessageConst.PROPERTY_REAL_TOPIC);
         MessageAccessor.clearProperty(msgInner, MessageConst.PROPERTY_REAL_QUEUE_ID);
-        LOGGER.info("commit transaction msg:{}",msgInner);
         return msgInner;
     }
 

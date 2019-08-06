@@ -74,21 +74,12 @@ public class RequestTask implements Runnable {
         this.stopRun = stopRun;
     }
 
-    /**
-     * 执行任务
-     */
     @Override
     public void run() {
         if (!this.stopRun)
             this.runnable.run();
     }
 
-    /**
-     * 返回响应信息
-     *
-     * @param code
-     * @param remark
-     */
     public void returnResponse(int code, String remark) {
         final RemotingCommand response = RemotingCommand.createResponseCommand(code, remark);
         response.setOpaque(request.getOpaque());

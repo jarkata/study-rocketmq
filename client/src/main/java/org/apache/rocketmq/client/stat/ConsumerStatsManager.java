@@ -25,11 +25,6 @@ import org.apache.rocketmq.common.protocol.body.ConsumeStatus;
 import org.apache.rocketmq.common.stats.StatsItemSet;
 import org.apache.rocketmq.common.stats.StatsSnapshot;
 
-/**
- * 消费者状态管理
- *
- * @author rocket
- */
 public class ConsumerStatsManager {
     private static final InternalLogger log = ClientLogger.getLog();
 

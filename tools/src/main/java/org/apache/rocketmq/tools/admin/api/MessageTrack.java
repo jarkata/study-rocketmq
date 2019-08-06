@@ -17,22 +17,9 @@
 
 package org.apache.rocketmq.tools.admin.api;
 
-/**
- * 消息轨迹
- * @author rocket
- */
 public class MessageTrack {
-    /**
-     * 消费者组
-     */
     private String consumerGroup;
-    /**
-     * 轨迹类型
-     */
     private TrackType trackType;
-    /**
-     * 异常描述
-     */
     private String exceptionDesc;
 
     public String getConsumerGroup() {

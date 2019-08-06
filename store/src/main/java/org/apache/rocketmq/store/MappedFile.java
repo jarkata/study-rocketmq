@@ -89,9 +89,8 @@ public class MappedFile extends ReferenceResource {
     }
 
     public static void clean(final ByteBuffer buffer) {
-        if (buffer == null || !buffer.isDirect() || buffer.capacity() == 0) {
+        if (buffer == null || !buffer.isDirect() || buffer.capacity() == 0)
             return;
-        }
         invoke(invoke(viewed(buffer), "cleaner"), "clean");
     }
 
@@ -130,11 +129,10 @@ public class MappedFile extends ReferenceResource {
         }
 
         ByteBuffer viewedBuffer = (ByteBuffer) invoke(buffer, methodName);
-        if (viewedBuffer == null) {
+        if (viewedBuffer == null)
             return buffer;
-        } else {
+        else
             return viewed(viewedBuffer);
-        }
     }
 
     public static int getTotalMappedFiles() {

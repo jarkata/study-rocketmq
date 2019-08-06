@@ -31,9 +31,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class TransactionProducer {
-
-    public static final String TOPIC_TEST_TRACE = "test-hmy-transaction";
-
     public static void main(String[] args) throws MQClientException, InterruptedException {
         TransactionListener transactionListener = new TransactionListenerImpl();
         TransactionMQProducer producer = new TransactionMQProducer("please_rename_unique_group_name");
@@ -45,16 +42,16 @@ public class TransactionProducer {
                 return thread;
             }
         });
-        producer.setNamesrvAddr("localhost:9876;localhost:17001");
+
         producer.setExecutorService(executorService);
         producer.setTransactionListener(transactionListener);
         producer.start();
 
         String[] tags = new String[] {"TagA", "TagB", "TagC", "TagD", "TagE"};
-        for (int i = 0; i < 1; i++) {
+        for (int i = 0; i < 10; i++) {
             try {
                 Message msg =
-                    new Message(TOPIC_TEST_TRACE, tags[i % tags.length],
+                    new Message("TopicTest1234", tags[i % tags.length], "KEY" + i,
                         ("Hello RocketMQ " + i).getBytes(RemotingHelper.DEFAULT_CHARSET));
                 SendResult sendResult = producer.sendMessageInTransaction(msg, null);
                 System.out.printf("%s%n", sendResult);

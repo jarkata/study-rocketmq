@@ -37,11 +37,8 @@ import org.apache.rocketmq.remoting.exception.RemotingException;
 
 /**
  * Local storage implementation
- *
- * @author rocketmq
  */
 public class LocalFileOffsetStore implements OffsetStore {
-
     public final static String LOCAL_OFFSET_STORE_DIR = System.getProperty(
         "rocketmq.client.localOffsetStoreDir",
         System.getProperty("user.home") + File.separator + ".rocketmq_offsets");
@@ -133,9 +130,8 @@ public class LocalFileOffsetStore implements OffsetStore {
 
     @Override
     public void persistAll(Set<MessageQueue> mqs) {
-        if (null == mqs || mqs.isEmpty()) {
+        if (null == mqs || mqs.isEmpty())
             return;
-        }
 
         OffsetSerializeWrapper offsetSerializeWrapper = new OffsetSerializeWrapper();
         for (Map.Entry<MessageQueue, AtomicLong> entry : this.offsetTable.entrySet()) {

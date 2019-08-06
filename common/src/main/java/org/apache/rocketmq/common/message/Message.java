@@ -43,13 +43,11 @@ public class Message implements Serializable {
         this.flag = flag;
         this.body = body;
 
-        if (tags != null && tags.length() > 0) {
+        if (tags != null && tags.length() > 0)
             this.setTags(tags);
-        }
 
-        if (keys != null && keys.length() > 0) {
+        if (keys != null && keys.length() > 0)
             this.setKeys(keys);
-        }
 
         this.setWaitStoreMsgOK(waitStoreMsgOK);
     }
@@ -161,6 +159,10 @@ public class Message implements Serializable {
 
     public void setWaitStoreMsgOK(boolean waitStoreMsgOK) {
         this.putProperty(MessageConst.PROPERTY_WAIT_STORE_MSG_OK, Boolean.toString(waitStoreMsgOK));
+    }
+
+    public void setInstanceId(String instanceId) {
+        this.putProperty(MessageConst.PROPERTY_INSTANCE_ID, instanceId);
     }
 
     public int getFlag() {

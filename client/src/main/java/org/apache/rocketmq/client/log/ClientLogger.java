@@ -27,11 +27,6 @@ import org.apache.rocketmq.logging.inner.Logger;
 import org.apache.rocketmq.logging.inner.LoggingBuilder;
 import org.apache.rocketmq.remoting.common.RemotingHelper;
 
-/**
- * multi implements of th log client
- *
- * @author rocketmq
- */
 public class ClientLogger {
 
     public static final String CLIENT_LOG_USESLF4J = "rocketmq.client.logUseSlf4j";
@@ -66,7 +61,6 @@ public class ClientLogger {
         String clientLogRoot = System.getProperty(CLIENT_LOG_ROOT, System.getProperty("user.home") + "/logs/rocketmqlogs");
         String clientLogMaxIndex = System.getProperty(CLIENT_LOG_MAXINDEX, "10");
         String clientLogFileName = System.getProperty(CLIENT_LOG_FILENAME, "rocketmq_client.log");
-        //default 1T filesize
         String maxFileSize = System.getProperty(CLIENT_LOG_FILESIZE, "1073741824");
         String asyncQueueSize = System.getProperty(CLIENT_LOG_ASYNC_QUEUESIZE, "1024");
 
@@ -84,11 +78,6 @@ public class ClientLogger {
         Logger.getRootLogger().addAppender(rocketmqClientAppender);
     }
 
-    /**
-     * get logger implmenets
-     * @param loggerName
-     * @return
-     */
     private static InternalLogger createLogger(final String loggerName) {
         String clientLogLevel = System.getProperty(CLIENT_LOG_LEVEL, "INFO");
         boolean additive = "true".equalsIgnoreCase(System.getProperty(CLIENT_LOG_ADDITIVE));

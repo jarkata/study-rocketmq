@@ -21,8 +21,6 @@ import java.util.Set;
 
 /**
  * Trace transfering bean
- *
- * @author rocketmq
  */
 public class TraceTransferBean {
     private String transData;

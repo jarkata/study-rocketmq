@@ -208,12 +208,10 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
         if (request.getBody() != null) {
             try {
                 registerBrokerBody = RegisterBrokerBody.decode(request.getBody(), requestHeader.isCompressed());
-                log.info("registerBorker body={}",registerBrokerBody);
             } catch (Exception e) {
                 throw new RemotingCommandException("Failed to decode RegisterBrokerBody", e);
             }
         } else {
-            log.info("request body is null");
             registerBrokerBody.getTopicConfigSerializeWrapper().getDataVersion().setCounter(new AtomicLong(0));
             registerBrokerBody.getTopicConfigSerializeWrapper().getDataVersion().setTimestamp(0);
         }
@@ -336,18 +334,8 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
         return response;
     }
 
-    /**
-     * request param: topic,
-     * base on the topic and netty channel
-     * namesrv process
-     * @param ctx
-     * @param request
-     * @return
-     * @throws RemotingCommandException
-     */
     public RemotingCommand getRouteInfoByTopic(ChannelHandlerContext ctx,
         RemotingCommand request) throws RemotingCommandException {
-
         final RemotingCommand response = RemotingCommand.createResponseCommand(null);
         final GetRouteInfoRequestHeader requestHeader =
             (GetRouteInfoRequestHeader) request.decodeCommandCustomHeader(GetRouteInfoRequestHeader.class);

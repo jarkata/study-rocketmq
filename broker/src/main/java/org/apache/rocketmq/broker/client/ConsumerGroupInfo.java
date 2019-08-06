@@ -150,7 +150,6 @@ public class ConsumerGroupInfo {
         boolean updated = false;
 
         for (SubscriptionData sub : subList) {
-            //add new subscriptionData
             SubscriptionData old = this.subscriptionTable.get(sub.getTopic());
             if (old == null) {
                 SubscriptionData prev = this.subscriptionTable.putIfAbsent(sub.getTopic(), sub);
@@ -173,7 +172,6 @@ public class ConsumerGroupInfo {
             }
         }
 
-        //subscription data removed
         Iterator<Entry<String, SubscriptionData>> it = this.subscriptionTable.entrySet().iterator();
         while (it.hasNext()) {
             Entry<String, SubscriptionData> next = it.next();

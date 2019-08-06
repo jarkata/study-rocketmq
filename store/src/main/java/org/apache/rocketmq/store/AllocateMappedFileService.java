@@ -122,15 +122,7 @@ public class AllocateMappedFileService extends ServiceThread {
 
     @Override
     public void shutdown() {
-        this.stopped = true;
-        this.thread.interrupt();
-
-        try {
-            this.thread.join(this.getJointime());
-        } catch (InterruptedException e) {
-            log.error("Interrupted", e);
-        }
-
+        super.shutdown(true);
         for (AllocateRequest req : this.requestTable.values()) {
             if (req.mappedFile != null) {
                 log.info("delete pre allocated maped file, {}", req.mappedFile.getFileName());

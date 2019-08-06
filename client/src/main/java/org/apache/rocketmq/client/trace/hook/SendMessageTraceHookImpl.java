@@ -16,21 +16,17 @@
  */
 package org.apache.rocketmq.client.trace.hook;
 
+import java.util.ArrayList;
 import org.apache.rocketmq.client.hook.SendMessageContext;
 import org.apache.rocketmq.client.hook.SendMessageHook;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.client.trace.AsyncTraceDispatcher;
+import org.apache.rocketmq.client.trace.TraceBean;
 import org.apache.rocketmq.client.trace.TraceContext;
 import org.apache.rocketmq.client.trace.TraceDispatcher;
-import org.apache.rocketmq.client.trace.TraceBean;
 import org.apache.rocketmq.client.trace.TraceType;
-import java.util.ArrayList;
+import org.apache.rocketmq.common.protocol.NamespaceUtil;
 
-/**
- * send message hook
- *
- * @author rocketmq
- */
 public class SendMessageTraceHookImpl implements SendMessageHook {
 
     private TraceDispatcher localDispatcher;
@@ -55,10 +51,10 @@ public class SendMessageTraceHookImpl implements SendMessageHook {
         tuxeContext.setTraceBeans(new ArrayList<TraceBean>(1));
         context.setMqTraceContext(tuxeContext);
         tuxeContext.setTraceType(TraceType.Pub);
-        tuxeContext.setGroupName(context.getProducerGroup());
+        tuxeContext.setGroupName(NamespaceUtil.withoutNamespace(context.getProducerGroup()));
         //build the data bean object of message trace
         TraceBean traceBean = new TraceBean();
-        traceBean.setTopic(context.getMessage().getTopic());
+        traceBean.setTopic(NamespaceUtil.withoutNamespace(context.getMessage().getTopic()));
         traceBean.setTags(context.getMessage().getTags());
         traceBean.setKeys(context.getMessage().getKeys());
         traceBean.setStoreHost(context.getBrokerAddr());
@@ -94,9 +90,6 @@ public class SendMessageTraceHookImpl implements SendMessageHook {
             tuxeContext.setSuccess(false);
         }
         tuxeContext.setRegionId(context.getSendResult().getRegionId());
-
-        System.out.println(tuxeContext.isSuccess());
-
         traceBean.setMsgId(context.getSendResult().getMsgId());
         traceBean.setOffsetMsgId(context.getSendResult().getOffsetMsgId());
         traceBean.setStoreTime(tuxeContext.getTimeStamp() + costTime / 2);

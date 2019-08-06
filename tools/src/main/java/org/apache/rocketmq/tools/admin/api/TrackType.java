@@ -17,11 +17,6 @@
 
 package org.apache.rocketmq.tools.admin.api;
 
-/**
- * 消息跟踪类型
- *
- * @author rocket
- */
 public enum TrackType {
     CONSUMED,
     CONSUMED_BUT_FILTERED,

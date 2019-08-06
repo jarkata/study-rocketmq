@@ -548,7 +548,6 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
         return Collections.EMPTY_MAP;
     }
 
-    @Override
     public void createOrUpdateOrderConf(String key, String value,
         boolean isCluster) throws RemotingException, MQBrokerException,
         InterruptedException, MQClientException {
