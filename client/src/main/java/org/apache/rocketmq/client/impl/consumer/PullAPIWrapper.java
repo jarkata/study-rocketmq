@@ -68,17 +68,38 @@ public class PullAPIWrapper {
         this.unitMode = unitMode;
     }
 
+    /**
+     * 处理拉取消息的结果
+     *
+     * @param mq
+     * @param pullResult
+     * @param subscriptionData
+     * @return
+     */
     public PullResult processPullResult(final MessageQueue mq, final PullResult pullResult,
                                         final SubscriptionData subscriptionData) {
         PullResultExt pullResultExt = (PullResultExt) pullResult;
 
+
+        /**
+         * 更新从哪个节点拉取的数据
+         */
         this.updatePullFromWhichNode(mq, pullResultExt.getSuggestWhichBrokerId());
+
         if (PullStatus.FOUND == pullResult.getPullStatus()) {
+
             ByteBuffer byteBuffer = ByteBuffer.wrap(pullResultExt.getMessageBinary());
+            /**
+             * 解码消息，转换为对象
+             */
             List<MessageExt> msgList = MessageDecoder.decodes(byteBuffer);
 
             List<MessageExt> msgListFilterAgain = msgList;
+
             if (!subscriptionData.getTagsSet().isEmpty() && !subscriptionData.isClassFilterMode()) {
+                /**
+                 * 根据tag集合过滤消息
+                 */
                 msgListFilterAgain = new ArrayList<MessageExt>(msgList.size());
                 for (MessageExt msg : msgList) {
                     if (msg.getTags() != null) {
@@ -88,7 +109,9 @@ public class PullAPIWrapper {
                     }
                 }
             }
-
+            /**
+             * 执行回调
+             */
             if (this.hasHook()) {
                 FilterMessageContext filterMessageContext = new FilterMessageContext();
                 filterMessageContext.setUnitMode(unitMode);
@@ -97,14 +120,24 @@ public class PullAPIWrapper {
             }
 
             for (MessageExt msg : msgListFilterAgain) {
+                /**
+                 * 判断是否为事务消息，如果是，则设置事务ID
+                 */
                 String traFlag = msg.getProperty(MessageConst.PROPERTY_TRANSACTION_PREPARED);
                 if (traFlag != null && Boolean.parseBoolean(traFlag)) {
                     msg.setTransactionId(msg.getProperty(MessageConst.PROPERTY_UNIQ_CLIENT_MESSAGE_ID_KEYIDX));
                 }
+                /**
+                 * 设置最小访问offset的值，
+                 */
                 MessageAccessor.putProperty(msg, MessageConst.PROPERTY_MIN_OFFSET,
                         Long.toString(pullResult.getMinOffset()));
+                /**
+                 * 设置最大offset的值
+                 */
                 MessageAccessor.putProperty(msg, MessageConst.PROPERTY_MAX_OFFSET,
                         Long.toString(pullResult.getMaxOffset()));
+
             }
 
             pullResultExt.setMsgFoundList(msgListFilterAgain);

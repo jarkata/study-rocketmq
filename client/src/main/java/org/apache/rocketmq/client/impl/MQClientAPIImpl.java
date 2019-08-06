@@ -645,13 +645,19 @@ public class MQClientAPIImpl {
             final long timeoutMillis,
             final PullCallback pullCallback
     ) throws RemotingException, InterruptedException {
+        /**
+         * 异步拉取消息
+         */
         this.remotingClient.invokeAsync(addr, request, timeoutMillis, new InvokeCallback() {
             @Override
             public void operationComplete(ResponseFuture responseFuture) {
+                /**
+                 * 回调方法，该回调方法的触发，仍旧为mq 的broker向客户端写消息后，触发调用本地方法
+                 */
                 RemotingCommand response = responseFuture.getResponseCommand();
                 if (response != null) {
                     try {
-                        PullResult pullResult = MQClientAPIImpl.this.processPullResponse(response);
+                        PullResult pullResult = processPullResponse(response);
                         assert pullResult != null;
                         pullCallback.onSuccess(pullResult);
                     } catch (Exception e) {
@@ -730,6 +736,9 @@ public class MQClientAPIImpl {
         PullMessageResponseHeader responseHeader =
                 (PullMessageResponseHeader) response.decodeCommandCustomHeader(PullMessageResponseHeader.class);
 
+        /**
+         * 组织pull请求对象
+         */
         return new PullResultExt(pullStatus, responseHeader.getNextBeginOffset(), responseHeader.getMinOffset(),
                 responseHeader.getMaxOffset(), null, responseHeader.getSuggestWhichBrokerId(), response.getBody());
     }
