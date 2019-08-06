@@ -226,6 +226,17 @@ public class MQClientInstance {
     }
 
 
+    /**
+     * 启动Netty通讯服务
+     * <p>
+     * 启动拉取消息任务
+     * <p>
+     * 启动负载均衡任务
+     * <p>
+     * 启动推送消息任务
+     *
+     * @throws MQClientException
+     */
     public void start() throws MQClientException {
 
         synchronized (this) {
@@ -245,6 +256,9 @@ public class MQClientInstance {
                     // Start rebalance service
                     /**
                      * 先启动rebalance服务，然后再做线程服务的唤醒
+                     *
+                     * 在rablance时，在主动推送模式下，会触发主动拉取消息的线程
+                     * 在主动拉取模式下，rablance起什么作用？
                      */
                     this.rebalanceService.start();
                     // Start push service

@@ -429,7 +429,7 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
                                         offsetStore.updateOffset(pullRequest.getMessageQueue(),
                                                 pullRequest.getNextOffset(), false);
                                         /**
-                                         * 持计划offset
+                                         * 持久化offset
                                          */
                                         offsetStore.persist(pullRequest.getMessageQueue());
 
