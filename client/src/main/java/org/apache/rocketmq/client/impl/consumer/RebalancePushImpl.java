@@ -19,6 +19,7 @@ package org.apache.rocketmq.client.impl.consumer;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
 import org.apache.rocketmq.client.consumer.AllocateMessageQueueStrategy;
 import org.apache.rocketmq.client.consumer.store.OffsetStore;
 import org.apache.rocketmq.client.consumer.store.ReadOffsetType;
@@ -41,8 +42,8 @@ public class RebalancePushImpl extends RebalanceImpl {
     }
 
     public RebalancePushImpl(String consumerGroup, MessageModel messageModel,
-        AllocateMessageQueueStrategy allocateMessageQueueStrategy,
-        MQClientInstance mQClientFactory, DefaultMQPushConsumerImpl defaultMQPushConsumerImpl) {
+                             AllocateMessageQueueStrategy allocateMessageQueueStrategy,
+                             MQClientInstance mQClientFactory, DefaultMQPushConsumerImpl defaultMQPushConsumerImpl) {
         super(consumerGroup, messageModel, allocateMessageQueueStrategy, mQClientFactory);
         this.defaultMQPushConsumerImpl = defaultMQPushConsumerImpl;
     }
@@ -64,7 +65,7 @@ public class RebalancePushImpl extends RebalanceImpl {
             if (pullThresholdForTopic != -1) {
                 int newVal = Math.max(1, pullThresholdForTopic / currentQueueCount);
                 log.info("The pullThresholdForQueue is changed from {} to {}",
-                    this.defaultMQPushConsumerImpl.getDefaultMQPushConsumer().getPullThresholdForQueue(), newVal);
+                        this.defaultMQPushConsumerImpl.getDefaultMQPushConsumer().getPullThresholdForQueue(), newVal);
                 this.defaultMQPushConsumerImpl.getDefaultMQPushConsumer().setPullThresholdForQueue(newVal);
             }
 
@@ -72,7 +73,7 @@ public class RebalancePushImpl extends RebalanceImpl {
             if (pullThresholdSizeForTopic != -1) {
                 int newVal = Math.max(1, pullThresholdSizeForTopic / currentQueueCount);
                 log.info("The pullThresholdSizeForQueue is changed from {} to {}",
-                    this.defaultMQPushConsumerImpl.getDefaultMQPushConsumer().getPullThresholdSizeForQueue(), newVal);
+                        this.defaultMQPushConsumerImpl.getDefaultMQPushConsumer().getPullThresholdSizeForQueue(), newVal);
                 this.defaultMQPushConsumerImpl.getDefaultMQPushConsumer().setPullThresholdSizeForQueue(newVal);
             }
         }
@@ -81,12 +82,19 @@ public class RebalancePushImpl extends RebalanceImpl {
         this.getmQClientFactory().sendHeartbeatToAllBrokerWithLock();
     }
 
+    /**
+     * 移除不必要的消息队列，该方法被RabalanceImpl的updateProcessQueueTableInRebalance方法调用
+     *
+     * @param mq
+     * @param pq
+     * @return
+     */
     @Override
     public boolean removeUnnecessaryMessageQueue(MessageQueue mq, ProcessQueue pq) {
         this.defaultMQPushConsumerImpl.getOffsetStore().persist(mq);
         this.defaultMQPushConsumerImpl.getOffsetStore().removeOffset(mq);
         if (this.defaultMQPushConsumerImpl.isConsumeOrderly()
-            && MessageModel.CLUSTERING.equals(this.defaultMQPushConsumerImpl.messageModel())) {
+                && MessageModel.CLUSTERING.equals(this.defaultMQPushConsumerImpl.messageModel())) {
             try {
                 if (pq.getLockConsume().tryLock(1000, TimeUnit.MILLISECONDS)) {
                     try {
@@ -96,8 +104,8 @@ public class RebalancePushImpl extends RebalanceImpl {
                     }
                 } else {
                     log.warn("[WRONG]mq is consuming, so can not unlock it, {}. maybe hanged for a while, {}",
-                        mq,
-                        pq.getTryUnlockTimes());
+                            mq,
+                            pq.getTryUnlockTimes());
 
                     pq.incTryUnlockTimes();
                 }
@@ -192,7 +200,7 @@ public class RebalancePushImpl extends RebalanceImpl {
                     } else {
                         try {
                             long timestamp = UtilAll.parseDate(this.defaultMQPushConsumerImpl.getDefaultMQPushConsumer().getConsumeTimestamp(),
-                                UtilAll.YYYYMMDDHHMMSS).getTime();
+                                    UtilAll.YYYYMMDDHHMMSS).getTime();
                             result = this.mQClientFactory.getMQAdminImpl().searchOffset(mq, timestamp);
                         } catch (MQClientException e) {
                             result = -1;
@@ -211,6 +219,11 @@ public class RebalancePushImpl extends RebalanceImpl {
         return result;
     }
 
+    /**
+     * 分发拉取消息的对象
+     *
+     * @param pullRequestList
+     */
     @Override
     public void dispatchPullRequest(List<PullRequest> pullRequestList) {
         for (PullRequest pullRequest : pullRequestList) {

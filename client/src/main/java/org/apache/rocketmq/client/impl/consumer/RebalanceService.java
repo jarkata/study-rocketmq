@@ -23,8 +23,8 @@ import org.apache.rocketmq.logging.InternalLogger;
 
 public class RebalanceService extends ServiceThread {
     private static long waitInterval =
-        Long.parseLong(System.getProperty(
-            "rocketmq.client.rebalance.waitInterval", "20000"));
+            Long.parseLong(System.getProperty(
+                    "rocketmq.client.rebalance.waitInterval", "20000"));
     private final InternalLogger log = ClientLogger.getLog();
     private final MQClientInstance mqClientFactory;
 
@@ -37,7 +37,13 @@ public class RebalanceService extends ServiceThread {
         log.info(this.getServiceName() + " service started");
 
         while (!this.isStopped()) {
+            /**
+             * 间隔时间
+             */
             this.waitForRunning(waitInterval);
+            /**
+             * 触发客户端负载，对queue实现一次消息负载均衡处理
+             */
             this.mqClientFactory.doRebalance();
         }
 

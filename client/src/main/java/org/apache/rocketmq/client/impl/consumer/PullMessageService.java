@@ -71,7 +71,9 @@ public class PullMessageService extends ServiceThread {
     }
 
     /**
-     * 立即执行拉取消息的请求
+     * 立即执行拉取消息的请求，
+     * <p>
+     * pullRequestQueue仍旧在客户端内存中
      *
      * @param pullRequest
      */
@@ -109,7 +111,7 @@ public class PullMessageService extends ServiceThread {
     private void pullMessage(final PullRequest pullRequest) {
 
         /**
-         * 根据消费者组选择消费者实现
+         * 根据消费者组选择消费者实现，该操作仍旧是从客户端内存中读取消费者内部实现
          */
         final MQConsumerInner consumer = this.mQClientFactory.selectConsumer(pullRequest.getConsumerGroup());
         if (consumer != null) {
@@ -126,6 +128,9 @@ public class PullMessageService extends ServiceThread {
 
         while (!this.isStopped()) {
             try {
+                /**
+                 * 如果队列为空时，获取消息旧会被阻塞
+                 */
                 PullRequest pullRequest = this.pullRequestQueue.take();
                 this.pullMessage(pullRequest);
             } catch (InterruptedException ignored) {

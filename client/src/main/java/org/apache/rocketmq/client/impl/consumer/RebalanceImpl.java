@@ -339,7 +339,7 @@ public abstract class RebalanceImpl {
      * 触发第一次拉取消息时的赋值
      *
      * @param topic
-     * @param mqSet
+     * @param mqSet   当前的消息队列集合
      * @param isOrder
      * @return
      */
@@ -347,61 +347,104 @@ public abstract class RebalanceImpl {
                                                        final boolean isOrder) {
         boolean changed = false;
 
+        /**
+         * 迭代正在处理中的队中的信息
+         */
         Iterator<Entry<MessageQueue, ProcessQueue>> it = this.processQueueTable.entrySet().iterator();
         while (it.hasNext()) {
             Entry<MessageQueue, ProcessQueue> next = it.next();
             MessageQueue mq = next.getKey();
             ProcessQueue pq = next.getValue();
 
+            /**
+             * 如果队列消息的topic与本次重新平衡的Topic名称一致，则做下列处理
+             */
             if (mq.getTopic().equals(topic)) {
+                /**
+                 * 当前的消息队列集合中不包含正在处理的队列，则将其移除
+                 */
                 if (!mqSet.contains(mq)) {
+                    //标记为删除
                     pq.setDropped(true);
                     if (this.removeUnnecessaryMessageQueue(mq, pq)) {
                         it.remove();
                         changed = true;
                         log.info("doRebalance, {}, remove unnecessary mq, {}", consumerGroup, mq);
                     }
-                } else if (pq.isPullExpired()) {
-                    switch (this.consumeType()) {
-                        case CONSUME_ACTIVELY:
-                            break;
-                        case CONSUME_PASSIVELY:
-                            pq.setDropped(true);
-                            if (this.removeUnnecessaryMessageQueue(mq, pq)) {
-                                it.remove();
-                                changed = true;
-                                log.error("[BUG]doRebalance, {}, remove unnecessary mq, {}, because pull is pause, so try to fixed it",
-                                        consumerGroup, mq);
-                            }
-                            break;
-                        default:
-                            break;
+                } else
+                /**
+                 * 队列已经过期。
+                 * 如果消费类型为被动消费，则标记为删除
+                 */
+                    if (pq.isPullExpired()) {
+                        switch (this.consumeType()) {
+
+                            //主动消费
+                            case CONSUME_ACTIVELY:
+                                break;
+                            //被动消费
+                            case CONSUME_PASSIVELY:
+                                pq.setDropped(true);
+                                if (this.removeUnnecessaryMessageQueue(mq, pq)) {
+                                    it.remove();
+                                    changed = true;
+                                    log.error("[BUG]doRebalance, {}, remove unnecessary mq, {}, because pull is pause, so try to fixed it",
+                                            consumerGroup, mq);
+                                }
+                                break;
+                            default:
+                                break;
+                        }
                     }
-                }
             }
         }
 
         List<PullRequest> pullRequestList = new ArrayList<PullRequest>();
         for (MessageQueue mq : mqSet) {
+            //如果当前处理队列的注册表中不包含当前队列，则新建对象，并将其放入处理中队列
             if (!this.processQueueTable.containsKey(mq)) {
+                //如果为顺序处理或者锁定队列失败，则换下一条继续处理
                 if (isOrder && !this.lock(mq)) {
                     log.warn("doRebalance, {}, add a new mq failed, {}, because lock failed", consumerGroup, mq);
                     continue;
                 }
 
+                /**
+                 * 从消息队列中移除存dirty的offset值，该方法可能会移除远程broker中的offset
+                 */
                 this.removeDirtyOffset(mq);
                 ProcessQueue pq = new ProcessQueue();
+                /**
+                 * 从消息队列中获取拉取消息的offset值，如果大于等于0，
+                 * 则将该队列放入处理中的注册表中processQueueTable
+                 */
                 long nextOffset = this.computePullFromWhere(mq);
                 if (nextOffset >= 0) {
                     ProcessQueue pre = this.processQueueTable.putIfAbsent(mq, pq);
+                    //如果放入后，返回之前的旧值，则认为当前消息队列已经存在
                     if (pre != null) {
                         log.info("doRebalance, {}, mq already exists, {}", consumerGroup, mq);
                     } else {
+                        /**
+                         * 如果不存在，则新建拉取消息的对象，
+                         */
                         log.info("doRebalance, {}, add a new mq, {}", consumerGroup, mq);
                         PullRequest pullRequest = new PullRequest();
+                        /**
+                         * 消费组
+                         */
                         pullRequest.setConsumerGroup(consumerGroup);
+                        /**
+                         * 消费的offset
+                         */
                         pullRequest.setNextOffset(nextOffset);
+                        /**
+                         * 设置消息队列
+                         */
                         pullRequest.setMessageQueue(mq);
+                        /**
+                         * 处理中的消息队列
+                         */
                         pullRequest.setProcessQueue(pq);
                         pullRequestList.add(pullRequest);
                         changed = true;
