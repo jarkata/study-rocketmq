@@ -145,15 +145,33 @@ public class RebalancePushImpl extends RebalanceImpl {
         this.defaultMQPushConsumerImpl.getOffsetStore().removeOffset(mq);
     }
 
+    /**
+     * 在RebalanceImpl中被调用，用于读取消息队列的offset值
+     * 若offset值不存在，则返回为0，若存在，则返回真实的值，
+     * 若offset即不是不存在，也没有消费过，则返回-1
+     * 返回-1时，在调用的位置也不会做任何处理
+     *
+     * @param mq
+     * @return
+     */
     @Override
     public long computePullFromWhere(MessageQueue mq) {
         long result = -1;
+        /**
+         * 首先判断其获取消息的方式
+         */
         final ConsumeFromWhere consumeFromWhere = this.defaultMQPushConsumerImpl.getDefaultMQPushConsumer().getConsumeFromWhere();
+        /**
+         * 获取到offset存储的对象
+         */
         final OffsetStore offsetStore = this.defaultMQPushConsumerImpl.getOffsetStore();
+
         switch (consumeFromWhere) {
             case CONSUME_FROM_LAST_OFFSET_AND_FROM_MIN_WHEN_BOOT_FIRST:
             case CONSUME_FROM_MIN_OFFSET:
             case CONSUME_FROM_MAX_OFFSET:
+
+                //从最后的offset处开始消费
             case CONSUME_FROM_LAST_OFFSET: {
                 long lastOffset = offsetStore.readOffset(mq, ReadOffsetType.READ_FROM_STORE);
                 if (lastOffset >= 0) {
@@ -175,6 +193,9 @@ public class RebalancePushImpl extends RebalanceImpl {
                 }
                 break;
             }
+            /**
+             * 从第一个offset值开始消费
+             */
             case CONSUME_FROM_FIRST_OFFSET: {
                 long lastOffset = offsetStore.readOffset(mq, ReadOffsetType.READ_FROM_STORE);
                 if (lastOffset >= 0) {
@@ -186,6 +207,7 @@ public class RebalancePushImpl extends RebalanceImpl {
                 }
                 break;
             }
+            //从根据时间戳消费
             case CONSUME_FROM_TIMESTAMP: {
                 long lastOffset = offsetStore.readOffset(mq, ReadOffsetType.READ_FROM_STORE);
                 if (lastOffset >= 0) {

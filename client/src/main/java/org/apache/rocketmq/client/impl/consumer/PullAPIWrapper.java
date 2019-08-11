@@ -82,7 +82,7 @@ public class PullAPIWrapper {
 
 
         /**
-         * 更新从哪个节点拉取的数据
+         * 更新从哪个节点拉取的数据,消费数据的过滤器，在客户端做的过滤
          */
         this.updatePullFromWhichNode(mq, pullResultExt.getSuggestWhichBrokerId());
 

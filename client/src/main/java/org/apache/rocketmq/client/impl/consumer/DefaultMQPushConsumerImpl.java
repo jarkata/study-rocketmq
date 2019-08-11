@@ -223,13 +223,13 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
         }
 
         /**
-         * 更新运行中消息队列的最后拉取消息时间
+         * 更新处理中消息队列的最后拉取消息时间
          */
         pullRequest.getProcessQueue().setLastPullTimestamp(System.currentTimeMillis());
 
         try {
             /**
-             * 确保状态可用
+             * 判断消费者客户端的服务状态是否为处理中
              */
             this.makeSureStateOK();
         } catch (MQClientException e) {
@@ -310,7 +310,7 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
         }
 
         /**
-         * 获取订阅关系的数据
+         * 获取订阅关系的数据，订阅相关数据在内存中获取
          */
         final SubscriptionData subscriptionData = this.rebalanceImpl.getSubscriptionInner().get(pullRequest.getMessageQueue().getTopic());
         if (null == subscriptionData) {
@@ -321,6 +321,44 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
 
         final long beginTimestamp = System.currentTimeMillis();
 
+
+
+        boolean commitOffsetEnable = false;
+        long commitOffsetValue = 0L;
+
+        /**
+         * 判断消息模型是否为集群，如果是，则读取offset的值，判断是否启用提交offset
+         */
+        if (MessageModel.CLUSTERING == this.defaultMQPushConsumer.getMessageModel()) {
+            commitOffsetValue = this.offsetStore.readOffset(pullRequest.getMessageQueue(), ReadOffsetType.READ_FROM_MEMORY);
+            if (commitOffsetValue > 0) {
+                commitOffsetEnable = true;
+            }
+        }
+
+        String subExpression = null;
+        boolean classFilter = false;
+        /**
+         * 再次获取订阅数据，判断在拉取时是否提交了订阅表达式及是否为CLass过滤器模式，如果是，则提取其表达式
+         */
+        SubscriptionData sd = this.rebalanceImpl.getSubscriptionInner().get(pullRequest.getMessageQueue().getTopic());
+        if (sd != null) {
+            if (this.defaultMQPushConsumer.isPostSubscriptionWhenPull() && !sd.isClassFilterMode()) {
+                subExpression = sd.getSubString();
+            }
+
+            classFilter = sd.isClassFilterMode();
+        }
+
+        /**
+         * 计算系统标志
+         */
+        int sysFlag = PullSysFlag.buildSysFlag(
+                commitOffsetEnable, // commitOffset
+                true, // suspend
+                subExpression != null, // subscription
+                classFilter // class filter
+        );
         PullCallback pullCallback = new PullCallback() {
             @Override
             public void onSuccess(PullResult pullResult) {
@@ -462,43 +500,6 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
                 DefaultMQPushConsumerImpl.this.executePullRequestLater(pullRequest, PULL_TIME_DELAY_MILLS_WHEN_EXCEPTION);
             }
         };
-
-        boolean commitOffsetEnable = false;
-        long commitOffsetValue = 0L;
-
-        /**
-         * 判断消息模型是否为集群，如果是，则读取offset的值，判断是否启用提交offset
-         */
-        if (MessageModel.CLUSTERING == this.defaultMQPushConsumer.getMessageModel()) {
-            commitOffsetValue = this.offsetStore.readOffset(pullRequest.getMessageQueue(), ReadOffsetType.READ_FROM_MEMORY);
-            if (commitOffsetValue > 0) {
-                commitOffsetEnable = true;
-            }
-        }
-
-        String subExpression = null;
-        boolean classFilter = false;
-        /**
-         * 再次获取订阅数据，判断在拉取时是否提交了订阅表达式
-         */
-        SubscriptionData sd = this.rebalanceImpl.getSubscriptionInner().get(pullRequest.getMessageQueue().getTopic());
-        if (sd != null) {
-            if (this.defaultMQPushConsumer.isPostSubscriptionWhenPull() && !sd.isClassFilterMode()) {
-                subExpression = sd.getSubString();
-            }
-
-            classFilter = sd.isClassFilterMode();
-        }
-
-        /**
-         * 计算系统标志
-         */
-        int sysFlag = PullSysFlag.buildSysFlag(
-                commitOffsetEnable, // commitOffset
-                true, // suspend
-                subExpression != null, // subscription
-                classFilter // class filter
-        );
         try {
             /**
              * 拉取消息

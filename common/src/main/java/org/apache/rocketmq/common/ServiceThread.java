@@ -18,6 +18,7 @@ package org.apache.rocketmq.common;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.apache.rocketmq.common.constant.LoggerName;
 import org.apache.rocketmq.logging.InternalLogger;
 import org.apache.rocketmq.logging.InternalLoggerFactory;
@@ -80,7 +81,7 @@ public abstract class ServiceThread implements Runnable {
             }
             long eclipseTime = System.currentTimeMillis() - beginTime;
             log.info("join thread " + this.getServiceName() + " eclipse time(ms) " + eclipseTime + " "
-                + this.getJointime());
+                    + this.getJointime());
         } catch (InterruptedException e) {
             log.error("Interrupted", e);
         }
@@ -132,10 +133,12 @@ public abstract class ServiceThread implements Runnable {
             return;
         }
 
+        //将CountDownLatch的值重新赋值为初始值
         //entry to wait
         waitPoint.reset();
 
         try {
+            //等待CountDownLatch对象超时
             waitPoint.await(interval, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             log.error("Interrupted", e);
