@@ -1012,6 +1012,11 @@ public class MQClientInstance {
         this.rebalanceService.wakeup();
     }
 
+    /**
+     * 做负载均衡策略
+     * consumerTable来源？
+     * push的rebalance和pull的rebalance不同
+     */
     public void doRebalance() {
         for (Map.Entry<String, MQConsumerInner> entry : this.consumerTable.entrySet()) {
             MQConsumerInner impl = entry.getValue();

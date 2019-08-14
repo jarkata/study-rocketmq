@@ -38,7 +38,7 @@ public class RebalanceService extends ServiceThread {
 
         while (!this.isStopped()) {
             /**
-             * 间隔时间
+             * 间隔时间,默认最长20s
              */
             this.waitForRunning(waitInterval);
             /**
