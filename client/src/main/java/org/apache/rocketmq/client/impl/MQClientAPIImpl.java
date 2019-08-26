@@ -823,6 +823,9 @@ public class MQClientAPIImpl {
             final String consumerGroup,
             final long timeoutMillis) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException,
             MQBrokerException, InterruptedException {
+        /**
+         * 根据消费者组获取消费者列表
+         */
         GetConsumerListByGroupRequestHeader requestHeader = new GetConsumerListByGroupRequestHeader();
         requestHeader.setConsumerGroup(consumerGroup);
         RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.GET_CONSUMER_LIST_BY_GROUP, requestHeader);
