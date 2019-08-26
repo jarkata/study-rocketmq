@@ -259,6 +259,13 @@ public class ConsumeMessageConcurrentlyService implements ConsumeMessageService 
         }
     }
 
+    /**
+     * 处理消费结果
+     *
+     * @param status
+     * @param context
+     * @param consumeRequest
+     */
     public void processConsumeResult(
             final ConsumeConcurrentlyStatus status,
             final ConsumeConcurrentlyContext context,

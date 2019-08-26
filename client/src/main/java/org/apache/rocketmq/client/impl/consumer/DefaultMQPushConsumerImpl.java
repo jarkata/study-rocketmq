@@ -401,7 +401,7 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
                                         pullRequest.getMessageQueue().getTopic(), pullResult.getMsgFoundList().size());
 
                                 /**
-                                 * 是否分发到消费者
+                                 * 是否分发到消费者--将查询到的消息放入处理中的队列中
                                  */
                                 boolean dispatchToConsume = processQueue.putMessage(pullResult.getMsgFoundList());
                                 /**

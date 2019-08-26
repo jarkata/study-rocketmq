@@ -26,6 +26,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.client.log.ClientLogger;
 import org.apache.rocketmq.logging.InternalLogger;
@@ -38,28 +39,46 @@ import org.apache.rocketmq.common.protocol.body.ProcessQueueInfo;
  * Queue consumption snapshot
  */
 public class ProcessQueue {
-    public final static long REBALANCE_LOCK_MAX_LIVE_TIME =
-        Long.parseLong(System.getProperty("rocketmq.client.rebalance.lockMaxLiveTime", "30000"));
+    //负载均衡锁存活的最大时间-30s（默认值）
+    public final static long REBALANCE_LOCK_MAX_LIVE_TIME = Long.parseLong(System.getProperty("rocketmq.client.rebalance.lockMaxLiveTime", "30000"));
+    //负载均衡锁的间隔时间-20s（默认值）
     public final static long REBALANCE_LOCK_INTERVAL = Long.parseLong(System.getProperty("rocketmq.client.rebalance.lockInterval", "20000"));
+    // 拉取消息的最大空闲时间-120s（默认值）
     private final static long PULL_MAX_IDLE_TIME = Long.parseLong(System.getProperty("rocketmq.client.pull.pullMaxIdleTime", "120000"));
+    //内部日志
     private final InternalLogger log = ClientLogger.getLog();
+    //TreeMap的读写锁
     private final ReadWriteLock lockTreeMap = new ReentrantReadWriteLock();
+    //消息树
     private final TreeMap<Long, MessageExt> msgTreeMap = new TreeMap<Long, MessageExt>();
+    //消息计数
     private final AtomicLong msgCount = new AtomicLong();
+    //消息大小计数
     private final AtomicLong msgSize = new AtomicLong();
+    //锁的消费者
     private final Lock lockConsume = new ReentrantLock();
     /**
      * A subset of msgTreeMap, will only be used when orderly consume
+     * 以顺序的方式消费消息
      */
     private final TreeMap<Long, MessageExt> consumingMsgOrderlyTreeMap = new TreeMap<Long, MessageExt>();
+    //试图解锁的次数
     private final AtomicLong tryUnlockTimes = new AtomicLong(0);
+    //队列最大偏移量
     private volatile long queueOffsetMax = 0L;
+    //是否删除
     private volatile boolean dropped = false;
+    //最后拉取时间
     private volatile long lastPullTimestamp = System.currentTimeMillis();
+    //最后消费时间
     private volatile long lastConsumeTimestamp = System.currentTimeMillis();
+    //是否锁定
     private volatile boolean locked = false;
+    //最后锁定的时间
     private volatile long lastLockTimestamp = System.currentTimeMillis();
+    //是否消费中
     private volatile boolean consuming = false;
+    //消息访问计数
     private volatile long msgAccCnt = 0;
 
     public boolean isLockExpired() {
@@ -123,31 +142,45 @@ public class ProcessQueue {
         }
     }
 
+    /**
+     * 写入消息
+     *
+     * @param msgs
+     * @return
+     */
     public boolean putMessage(final List<MessageExt> msgs) {
         boolean dispatchToConsume = false;
         try {
+            //获取读写锁
             this.lockTreeMap.writeLock().lockInterruptibly();
             try {
                 int validMsgCnt = 0;
+                //遍历消息列表
                 for (MessageExt msg : msgs) {
+                    //放入消息，旧消息为空，则表示其之前不存在
                     MessageExt old = msgTreeMap.put(msg.getQueueOffset(), msg);
                     if (null == old) {
                         validMsgCnt++;
+                        //累计消息大小
                         this.queueOffsetMax = msg.getQueueOffset();
                         msgSize.addAndGet(msg.getBody().length);
                     }
                 }
+                //统计消息数量
                 msgCount.addAndGet(validMsgCnt);
-
+                //如果消息缓存map中，如果有值，则认为可以消费
                 if (!msgTreeMap.isEmpty() && !this.consuming) {
                     dispatchToConsume = true;
                     this.consuming = true;
                 }
-
+                //如果消息列表有值
                 if (!msgs.isEmpty()) {
+                    //获取最后一个消息对象
                     MessageExt messageExt = msgs.get(msgs.size() - 1);
+                    //获取消息对象中的max_offset值
                     String property = messageExt.getProperty(MessageConst.PROPERTY_MAX_OFFSET);
                     if (property != null) {
+                        //offset的差值
                         long accTotal = Long.parseLong(property) - messageExt.getQueueOffset();
                         if (accTotal > 0) {
                             this.msgAccCnt = accTotal;
